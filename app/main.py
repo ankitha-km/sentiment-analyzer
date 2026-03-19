@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from predict import predict
+from app.predict import predict
 
 # Initialize FastAPI app FIRST
 app = FastAPI(
@@ -12,8 +12,10 @@ app = FastAPI(
 )
 
 # Mount static files AFTER app is created
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
+# ✅ Correct
+import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 # Request model
 class TextInput(BaseModel):
     text: str
@@ -27,7 +29,7 @@ class PredictionResponse(BaseModel):
 # Endpoints
 @app.get("/ui")
 def ui():
-    return FileResponse("static/index.html")
+    return FileResponse(os.path.join(BASE_DIR, "static", "index.html"))
 
 @app.get("/")
 def root():
@@ -53,3 +55,4 @@ def predict_sentiment(input: TextInput):
         )
     result = predict(input.text)
     return result
+
