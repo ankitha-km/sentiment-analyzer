@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SentimentIQ</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,300;0,600;1,300&display=swap" rel="stylesheet"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --ink:#1a1a1a;--ink2:#555;--ink3:#888;
+      --surface:#fff;--surface2:#f5f4f0;--surface3:#eceae4;
+      --pos:#1D9E75;--pos-bg:#E1F5EE;
+      --neg:#D85A30;--neg-bg:#FAECE7;
+      --neu:#185FA5;--neu-bg:#E6F1FB;
+      --irr:#7F77DD;--irr-bg:#EEEDFE;
+      --border:#e0ddd6;
+    }
+    body{background:var(--surface2);font-family:'DM Mono',monospace;color:var(--ink);min-height:100vh}
+    .shell{max-width:680px;margin:0 auto;padding:2rem 1rem}
+    .brand{text-align:center;margin-bottom:2.5rem}
+    .brand-name{font-family:'Fraunces',serif;font-size:42px;font-weight:600;letter-spacing:-1px;color:var(--ink)}
+    .brand-name span{font-style:italic;color:var(--pos)}
+    .brand-sub{font-size:11px;letter-spacing:3px;color:var(--ink3);text-transform:uppercase;margin-top:4px}
+    .input-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1rem}
+    .input-label{font-size:11px;letter-spacing:2px;color:var(--ink3);text-transform:uppercase;margin-bottom:10px;display:block}
+    textarea{width:100%;border:1px solid var(--border);border-radius:10px;padding:14px;font-family:'DM Mono',monospace;font-size:13px;color:var(--ink);background:var(--surface2);resize:none;outline:none;line-height:1.6;transition:border-color .2s}
+    textarea:focus{border-color:#888}
+    .btn-row{display:flex;gap:8px;margin-top:12px;align-items:center}
+    .btn-analyze{background:var(--ink);color:#fff;border:none;border-radius:10px;padding:12px 24px;font-family:'DM Mono',monospace;font-size:13px;font-weight:500;cursor:pointer;letter-spacing:.5px;transition:opacity .15s}
+    .btn-analyze:hover{opacity:.85}
+    .btn-analyze:disabled{opacity:.4;cursor:not-allowed}
+    .btn-clear{background:transparent;color:var(--ink3);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;transition:all .15s}
+    .btn-clear:hover{border-color:#888;color:var(--ink)}
+    .status{font-size:12px;color:var(--ink3);margin-left:auto}
+    .examples{margin-bottom:1rem}
+    .ex-label{font-size:11px;letter-spacing:2px;color:var(--ink3);text-transform:uppercase;margin-bottom:8px}
+    .ex-chips{display:flex;flex-wrap:wrap;gap:6px}
+    .chip{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:11px;font-family:'DM Mono',monospace;color:var(--ink2);cursor:pointer;transition:all .15s;white-space:nowrap}
+    .chip:hover{border-color:var(--ink);color:var(--ink);background:var(--surface2)}
+    .result-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1rem;display:none}
+    .result-card.show{display:block}
+    .result-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+    .sentiment-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border-radius:30px;font-size:13px;font-weight:500;letter-spacing:.5px}
+    .conf-text{font-size:12px;color:var(--ink3)}
+    .conf-num{font-family:'Fraunces',serif;font-size:28px;font-weight:600;color:var(--ink)}
+    .bars-label{font-size:11px;letter-spacing:2px;color:var(--ink3);text-transform:uppercase;margin-bottom:12px}
+    .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .bar-name{font-size:11px;color:var(--ink2);width:72px;flex-shrink:0}
+    .bar-track{flex:1;background:var(--surface3);border-radius:4px;height:6px;overflow:hidden}
+    .bar-fill{height:100%;border-radius:4px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+    .bar-val{font-size:11px;color:var(--ink3);width:38px;text-align:right;flex-shrink:0}
+    .divider{height:1px;background:var(--border);margin:1.25rem 0}
+    .history-section{margin-top:1.5rem}
+    .hist-label{font-size:11px;letter-spacing:2px;color:var(--ink3);text-transform:uppercase;margin-bottom:10px}
+    .hist-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+    .hist-item:last-child{border-bottom:none}
+    .hist-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .hist-text{font-size:12px;color:var(--ink2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .hist-badge{font-size:10px;padding:3px 9px;border-radius:12px;flex-shrink:0;font-weight:500}
+    .api-note{text-align:center;font-size:11px;color:var(--ink3);margin-top:1.5rem;letter-spacing:.5px}
+    .api-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#1D9E75;margin-right:6px;animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+    .error-msg{background:#FAECE7;border:1px solid #F0997B;border-radius:10px;padding:12px 16px;font-size:12px;color:#993C1D;margin-top:10px;display:none}
+    .error-msg.show{display:block}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="brand">
+      <div class="brand-name">Sentiment<span>IQ</span></div>
+      <div class="brand-sub">Real-time NLP · Explainable AI</div>
+    </div>
+
+    <div class="examples">
+      <div class="ex-label">Try an example</div>
+      <div class="ex-chips">
+        <div class="chip" onclick="setExample(this)">I absolutely love this!</div>
+        <div class="chip" onclick="setExample(this)">Worst experience ever</div>
+        <div class="chip" onclick="setExample(this)">The weather is okay today</div>
+        <div class="chip" onclick="setExample(this)">This game has good graphics</div>
+      </div>
+    </div>
+
+    <div class="input-card">
+      <label class="input-label">Your text</label>
+      <textarea id="txt" rows="4" placeholder="Type or paste any text to analyze sentiment..."></textarea>
+      <div class="btn-row">
+        <button class="btn-analyze" id="analyzeBtn" onclick="analyze()">Analyze</button>
+        <button class="btn-clear" onclick="clearAll()">Clear</button>
+        <span class="status" id="status"></span>
+      </div>
+      <div class="error-msg" id="errMsg"></div>
+    </div>
+
+    <div class="result-card" id="resultCard">
+      <div class="result-top">
+        <div>
+          <div style="font-size:11px;letter-spacing:2px;color:var(--ink3);text-transform:uppercase;margin-bottom:8px">Result</div>
+          <div class="sentiment-badge" id="sentBadge"></div>
+        </div>
+        <div style="text-align:right">
+          <div class="conf-text">confidence</div>
+          <div class="conf-num" id="confNum"></div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="bars-label">Class probabilities</div>
+      <div id="barsContainer"></div>
+      <div class="divider"></div>
+      <div style="font-size:11px;color:var(--ink3)">Model: TF-IDF + Logistic Regression &nbsp;·&nbsp; Classes: 4 &nbsp;·&nbsp; Accuracy: ~86%</div>
+    </div>
+
+    <div class="history-section" id="histSection" style="display:none">
+      <div class="hist-label">Recent predictions</div>
+      <div id="histList"></div>
+    </div>
+
+    <div class="api-note">
+      <span class="api-dot"></span>Connected to localhost:8000
+    </div>
+  </div>
+
+  <script>
+    const COLORS = {
+      Positive:  {bg:'var(--pos-bg)', color:'var(--pos)', dot:'#1D9E75'},
+      Negative:  {bg:'var(--neg-bg)', color:'var(--neg)', dot:'#D85A30'},
+      Neutral:   {bg:'var(--neu-bg)', color:'var(--neu)', dot:'#185FA5'},
+      Irrelevant:{bg:'var(--irr-bg)', color:'var(--irr)', dot:'#7F77DD'},
+    };
+    const BAR_COLORS = {
+      Positive:'#1D9E75', Negative:'#D85A30', Neutral:'#185FA5', Irrelevant:'#7F77DD'
+    };
+    let history = [];
+
+    function setExample(el){
+      document.getElementById('txt').value = el.textContent;
+      document.getElementById('errMsg').classList.remove('show');
+    }
+
+    async function analyze(){
+      const text = document.getElementById('txt').value.trim();
+      if(!text){ showError('Please enter some text to analyze.'); return; }
+      const btn = document.getElementById('analyzeBtn');
+      const status = document.getElementById('status');
+      btn.disabled = true;
+      status.textContent = 'analyzing...';
+      document.getElementById('errMsg').classList.remove('show');
+      try {
+        const res = await fetch('http://127.0.0.1:8000/predict', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({text})
+        });
+        if(!res.ok) throw new Error('API error ' + res.status);
+        const data = await res.json();
+        showResult(data, text);
+        addHistory(text, data.sentiment, data.confidence);
+      } catch(e){
+        showError('Could not reach API. Make sure uvicorn is running on port 8000.');
+      } finally {
+        btn.disabled = false;
+        status.textContent = '';
+      }
+    }
+
+    function showResult(data, text){
+      const c = COLORS[data.sentiment] || COLORS.Neutral;
+      document.getElementById('sentBadge').innerHTML = data.sentiment;
+      document.getElementById('sentBadge').style.background = c.bg;
+      document.getElementById('sentBadge').style.color = c.color;
+      document.getElementById('confNum').textContent = (data.confidence * 100).toFixed(1) + '%';
+      const probs = data.probabilities;
+      const sorted = Object.entries(probs).sort((a,b) => b[1]-a[1]);
+      let html = '';
+      sorted.forEach(([label, val]) => {
+        const pct = (val * 100).toFixed(1);
+        const fill = BAR_COLORS[label] || '#888';
+        html += `<div class="bar-row">
+          <div class="bar-name">${label}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${fill}"></div></div>
+          <div class="bar-val">${pct}%</div>
+        </div>`;
+      });
+      document.getElementById('barsContainer').innerHTML = html;
+      document.getElementById('resultCard').classList.add('show');
+    }
+
+    function addHistory(text, sentiment, confidence){
+      history.unshift({text, sentiment, confidence});
+      if(history.length > 5) history.pop();
+      renderHistory();
+    }
+
+    function renderHistory(){
+      if(history.length === 0) return;
+      document.getElementById('histSection').style.display = 'block';
+      document.getElementById('histList').innerHTML = history.map(h => {
+        const c = COLORS[h.sentiment] || COLORS.Neutral;
+        return `<div class="hist-item">
+          <div class="hist-dot" style="background:${c.dot}"></div>
+          <div class="hist-text">${h.text}</div>
+          <div class="hist-badge" style="background:${c.bg};color:${c.color}">${h.sentiment}</div>
+        </div>`;
+      }).join('');
+    }
+
+    function clearAll(){
+      document.getElementById('txt').value = '';
+      document.getElementById('resultCard').classList.remove('show');
+      document.getElementById('errMsg').classList.remove('show');
+      document.getElementById('histSection').style.display = 'none';
+      history = [];
+    }
+
+    function showError(msg){
+      const el = document.getElementById('errMsg');
+      el.textContent = msg;
+      el.classList.add('show');
+    }
+
+    document.getElementById('txt').addEventListener('keydown', e => {
+      if(e.key === 'Enter' && e.ctrlKey) analyze();
+    });
+  </script>
+</body>
+</html>
