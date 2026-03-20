@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentimentiq
+  labels:
+    app: sentimentiq
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sentimentiq
+  template:
+    metadata:
+      labels:
+        app: sentimentiq
+    spec:
+      containers:
+      - name: sentimentiq
+        image: ysgsvsv65/sentimentiq:v1
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"

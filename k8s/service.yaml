@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: sentimentiq-service
+spec:
+  selector:
+    app: sentimentiq
+  type: NodePort
+  ports:
+  - protocol: TCP
+    port: 8000
+    targetPort: 8000
+    nodePort: 30080
+```
+
+---
+
+## 🧠 What These Files Do
+```
+deployment.yaml → "Run 2 copies of my container
+                   restart if they crash
+                   use this Docker image"
+
+service.yaml    → "Expose the app on port 30080
+                   so we can access it from outside"
