@@ -4,6 +4,13 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from app.predict import predict
 
+from fastapi.responses import FileResponse, RedirectResponse
+
+# Change the root endpoint
+@app.get("/")
+def root():
+    return RedirectResponse(url="/ui")
+
 # Initialize FastAPI app FIRST
 app = FastAPI(
     title="SentimentIQ",
