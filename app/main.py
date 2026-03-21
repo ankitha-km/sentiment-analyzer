@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from predict import predict
+from app.predict import predict
 
 # Initialize FastAPI app FIRST
 app = FastAPI(
