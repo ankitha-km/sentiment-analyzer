@@ -1,15 +1,9 @@
+import os
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from pydantic import BaseModel
 from app.predict import predict
-
-from fastapi.responses import FileResponse, RedirectResponse
-
-# Change the root endpoint
-@app.get("/")
-def root():
-    return RedirectResponse(url="/ui")
 
 # Initialize FastAPI app FIRST
 app = FastAPI(
@@ -18,11 +12,10 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Mount static files AFTER app is created
-# ✅ Correct
-import os
+# Static files
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
+
 # Request model
 class TextInput(BaseModel):
     text: str
@@ -34,16 +27,13 @@ class PredictionResponse(BaseModel):
     probabilities: dict
 
 # Endpoints
+@app.get("/")
+def root():
+    return RedirectResponse(url="/ui")
+
 @app.get("/ui")
 def ui():
     return FileResponse(os.path.join(BASE_DIR, "static", "index.html"))
-
-@app.get("/")
-def root():
-    return {
-        "message": "Welcome to SentimentIQ!",
-        "docs":    "Visit /docs to test the API"
-    }
 
 @app.get("/health")
 def health():
@@ -56,10 +46,6 @@ def health():
 @app.post("/predict", response_model=PredictionResponse)
 def predict_sentiment(input: TextInput):
     if not input.text.strip():
-        raise HTTPException(
-            status_code=400,
-            detail="Text cannot be empty"
-        )
+        raise HTTPException(status_code=400, detail="Text cannot be empty")
     result = predict(input.text)
     return result
-
