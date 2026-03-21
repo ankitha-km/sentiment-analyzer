@@ -23,4 +23,4 @@ RUN python -c "import nltk; nltk.download('stopwords'); nltk.download('wordnet')
 EXPOSE 8000
 
 # Run the app from app/ folder
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--app-dir", "app"]
